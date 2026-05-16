@@ -251,6 +251,52 @@ gq_save:
   ret
 gen_question endp
 
+; ----------------------------------------------------------
+; New feature: get_player_name
+; reads up to 8 characters from the keyboard
+; handles backspace and enforces the length limit
+; ----------------------------------------------------------
+get_player_name proc
+
+  print_str msg_name_p
+  mov  si, 0
+  mov  name_len, 0
+
+gpn_loop:
+  read_key
+  cmp  al, 13                ; enter key ends input
+  je   gpn_done
+  cmp  al, 8                 ; backspace
+  je   gpn_bs
+  cmp  si, 8                 ; ignore input once 8 chars are stored
+  jge  gpn_loop
+  mov  player_name[si], al
+  inc  si
+  inc  name_len
+  jmp  gpn_loop
+
+gpn_bs:
+  cmp  si, 0
+  je   gpn_loop
+  dec  si
+  dec  name_len
+  mov  player_name[si], '$'
+  ; erase the character on screen: backspace, space, backspace
+  mov  ah, 02h
+  mov  dl, 8
+  int  21h
+  mov  dl, ' '
+  int  21h
+  mov  dl, 8
+  int  21h
+  jmp  gpn_loop
+
+gpn_done:
+  mov  player_name[si], '$'  ; dollar sign terminates the string for int 21h
+  print_nl
+  ret
+
+get_player_name endp
 
 select_difficulty proc
   ; print difficulty options on screen
